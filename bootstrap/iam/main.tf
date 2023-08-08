@@ -43,9 +43,32 @@ resource "aws_iam_role" "github_actions_deployer" {
 EOF
 }
 
+## Allow github-actions-deployer to assume roles in workload accounts
+resource "aws_iam_role_policy" "github_can_deploy_to_workloads" {
+  name = "github-can-deploy-to-workloads"
+  role = aws_iam_role.github_actions_deployer.id
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "This",
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": [
+              "arn:aws:iam::${data.aws_ssm_parameter.nonprod_account_id.value}:role/workload-depoyler-nonprod",
+              "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id.value}:role/workload-depoyler-prod"
+            ]
+        }
+    ]
+}
+EOF
+}
+
 resource "aws_iam_role_policy_attachment" "github_actions_deployer_mgmt_policies" {
-  for_each = toset(local.github_depoloyer_mgmt_policies)
-  role     = aws_iam_role.github_actions_deployer.name
+  for_each   = toset(local.github_depoloyer_mgmt_policies)
+  role       = aws_iam_role.github_actions_deployer.name
   policy_arn = each.value
 }
 
