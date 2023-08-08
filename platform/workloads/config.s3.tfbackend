@@ -1,0 +1,3 @@
+bucket = "orcid-platform-accelerator-demo-tf-state"
+region = "us-east-2"
+key = "platform/workload.tfstate"

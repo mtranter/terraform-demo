@@ -1,0 +1,90 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Ensure AWS CLI is installed
+if ! command -v aws &> /dev/null
+then
+    echo "AWS CLI could not be found. Please install it and try again."
+    exit
+fi
+
+# Ensure Terraform is installed
+if ! command -v terraform &> /dev/null
+then
+    echo "Terraform could not be found. Please install it and try again."
+    exit
+fi
+
+
+# Prompt and take inputs for TFVARS
+echo "Please enter the admin email address:"
+read admin_email
+echo "Please enter the allowed region (e.g., us-west-1, eu-central-1):"
+read region
+echo "Please enter workload accounts (comma-separated, e.g., nonproduction, production):"
+IFS="," read -a workload_accounts_array
+
+# Convert array to comma-separated string with quotes and trim whitespace
+workload_accounts_string=""
+for account in "${workload_accounts_array[@]}"; do
+    trimmed_account=$(echo "$account" | awk '{$1=$1};1')
+    workload_accounts_string+="\"$trimmed_account\","
+done
+
+# Remove the trailing comma
+workload_accounts_string=${workload_accounts_string%,}
+
+# Populate the TFVARS file
+cat > terraform.tfvars <<EOF
+admin_email_address = "${admin_email}"
+workload_allowed_regions=["${region}"]
+workload_accounts = [ ${workload_accounts_string} ]
+EOF
+
+# Prompt and take inputs for S3 bucket creation
+while true; do
+    # Prompt and take inputs for S3 bucket creation
+    echo "Please enter the name of the S3 TF State bucket:"
+    read bucket_name
+    echo "Please enter the region for the S3 bucket:"
+    read bucket_region
+
+    bucketstatus=$(aws s3api head-bucket --bucket "${bucket_name}" 2>&1)
+    echo "${bucketstatus}"
+
+    if echo "${bucketstatus}" | grep 'Not Found'; then
+        echo "Creating tfstate bucket..."
+        aws s3api create-bucket --bucket "${bucket_name}" --region "${bucket_region}" --create-bucket-configuration LocationConstraint="${bucket_region}"
+        echo "Bucket created successfully."
+        break # break the loop once the bucket is successfully created
+    elif echo "${bucketstatus}" | grep 'Forbidden'; then
+        echo "Bucket exists but not owned."
+    elif echo "${bucketstatus}" | grep 'Bad Request'; then
+        echo "Bucket name specified is invalid"
+    else
+        echo "Bucket owned and exists."
+        break
+    fi
+done
+
+cat > config.s3.tfbackend <<EOF
+bucket = "$bucket_name"
+region = "$bucket_region"
+key = "bootstrap/accounts.tfstate"
+EOF
+
+# Create the S3 bucket
+
+# Run terraform init with backend-config
+terraform init -backend-config=./config.s3.tfbackend
+
+# Check if AWS Organization exists, if so, terraform import it
+if aws organizations describe-organization &> /dev/null; then
+   # If aws_organizations_organization.org exists, does not exist in tf state import it
+    if ! terraform state show aws_organizations_organization.org &> /dev/null; then
+        terraform import aws_organizations_organization.org $(aws organizations describe-organization --query 'Organization.Id' --output text)
+    fi
+fi
+
+echo "Script completed."

@@ -1,0 +1,16 @@
+name: Reusable validation jobs
+
+on: workflow_call
+
+jobs:
+  validate-modules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.4
+      - name: Install TFSec
+        run: curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+      - name: Run TF Sec
+        run: tfsec ./platform/workloads

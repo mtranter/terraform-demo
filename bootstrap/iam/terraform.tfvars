@@ -1,0 +1,6 @@
+region                   = "us-east-2"
+openid_provider_url      = "https://token.actions.githubusercontent.com"
+openid_thumbprint        = "f879abce0008e4eb126e0097e46620f5aaae26ad"
+git_org                  = "mtranter"
+git_repo                 = "terraform-demo"
+git_trunk_branch         = "main"

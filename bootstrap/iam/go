@@ -1,0 +1,22 @@
+#! /usr/bin/env bash
+
+set -euo pipefail
+
+function target_show_github_cert_thumbprint() {
+    openssl s_client -connect token.actions.githubusercontent.com:443 </dev/null 2>/dev/null | \
+        openssl x509 -fingerprint -sha1 -noout -in /dev/stdin | \
+        sed -En 's/^sha1 Fingerprint=(.*)/\1/p' | \
+        tr -d ':' | \
+        tr '[:upper:]' '[:lower:]'
+}
+
+handler="target_$1"
+
+# if handler is a function, run it. Shifting args
+if [ "$(type -t $handler)" = function ]; then
+    shift
+    $handler "$@"
+else
+    echo "No handler for $1"
+    exit 1
+fi
