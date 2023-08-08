@@ -32,7 +32,6 @@ jobs:
           role-to-assume: ${{ secrets.DEPLOYER_ASSUME_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
-      # Hello from AWS: WhoAmI
       - name: TF Plan
         run: |
           cd ./platform/workloads
