@@ -27,6 +27,10 @@ jobs:
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
       # Hello from AWS: WhoAmI
-      - name: Sts GetCallerIdentity
+      - name: TF Plan
         run: |
-          aws sts get-caller-identity
+          cd ./platform/workloads
+          terraform init -backend-config=./config.s3.tfbackend
+          terraform workspace new nonprod || echo "Environment created"
+          terraform workspace select nonprod
+          terraform plan -var-file=./nonprod.tfvars -var provider_role_arn=${{ secrets.DEPLOYER_ASSUME_ROLE_ARN }}

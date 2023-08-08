@@ -1,3 +1,7 @@
+variable "provider_role_arn" {
+  type = string
+}
+
 variable "region" {
   type = string
 }   

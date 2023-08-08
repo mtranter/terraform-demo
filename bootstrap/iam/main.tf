@@ -27,7 +27,7 @@ resource "aws_iam_role" "github_actions_deployer" {
             "Condition": {
                 "StringEquals": {
                   "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                  "${aws_iam_openid_connect_provider.openid_provider.arn}:sub": "repo:${var.git_org}/${var.git_repo}:ref:refs/heads/${var.git_trunk_branch}"
+                  "token.actions.githubusercontent.com:sub": "repo:${var.git_org}/${var.git_repo}:ref:refs/heads/${var.git_trunk_branch}"
                 }
             }
         }
