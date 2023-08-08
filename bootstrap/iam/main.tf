@@ -1,5 +1,12 @@
 data "aws_caller_identity" "mgmt" {}
 
+locals {
+  github_depoloyer_mgmt_policies = [
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess",
+  ]
+}
+
 resource "aws_iam_openid_connect_provider" "openid_provider" {
   url = var.openid_provider_url
 
@@ -34,6 +41,12 @@ resource "aws_iam_role" "github_actions_deployer" {
     ]
 }
 EOF
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_deployer_mgmt_policies" {
+  for_each = toset(local.github_depoloyer_mgmt_policies)
+  role     = aws_iam_role.github_actions_deployer.name
+  policy_arn = each.value
 }
 
 resource "aws_iam_role" "nonprod_deployer" {

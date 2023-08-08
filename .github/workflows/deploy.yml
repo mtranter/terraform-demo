@@ -33,4 +33,4 @@ jobs:
           terraform init -backend-config=./config.s3.tfbackend
           terraform workspace new nonprod || echo "Environment created"
           terraform workspace select nonprod
-          terraform plan -var-file=./nonprod.tfvars -var provider_role_arn=${{ secrets.DEPLOYER_ASSUME_ROLE_ARN }}
+          terraform plan -var-file=./nonprod.tfvars -var provider_role_arn=${{ secrets.NONPROD_DEPLOYER_ASSUME_ROLE_ARN }}
