@@ -87,7 +87,7 @@ module "vpc" {
   database_inbound_acl_rules = [
     for sn in var.private_subnet_cidr_blocks :
     {
-      rule_number = index(var.var.private_subnet_cidr_blocks, sn) * 100 + 100
+      rule_number = index(var.private_subnet_cidr_blocks, sn) * 100 + 100
       rule_action = "allow"
       from_port   = 5432
       to_port     = 5432
